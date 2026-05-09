@@ -1,0 +1,15 @@
+com\ewallet\walletservice\controller\WalletController.class
+com\ewallet\walletservice\repository\WalletRepository.class
+com\ewallet\walletservice\config\JwtAuthFilter.class
+com\ewallet\walletservice\model\Wallet$WalletBuilder.class
+com\ewallet\walletservice\model\Wallet.class
+com\ewallet\walletservice\service\WalletService.class
+com\ewallet\walletservice\controller\WalletInternalController.class
+com\ewallet\walletservice\dto\DepositWithdrawRequest.class
+com\ewallet\walletservice\dto\WalletResponse$WalletResponseBuilder.class
+com\ewallet\walletservice\WalletServiceApplication.class
+com\ewallet\walletservice\service\AdminWalletService.class
+com\ewallet\walletservice\dto\WalletResponse.class
+com\ewallet\walletservice\aspect\LoggingAspect.class
+com\ewallet\walletservice\controller\AdminWalletController.class
+com\ewallet\walletservice\config\SecurityConfig.class

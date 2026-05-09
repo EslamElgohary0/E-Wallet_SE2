@@ -1,0 +1,116 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: ewallet-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - ewallet-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: ewallet-eureka
+    ports:
+      - "8761:8761"
+    networks:
+      - ewallet-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: ewallet-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - ewallet-network
+
+  auth-service:
+    build: ./auth-service
+    container_name: ewallet-auth
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/ewallet_auth
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - JWT_SECRET=ewallet-super-secret-key-2024-must-be-at-least-256-bits-long!!
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - ewallet-network
+
+  wallet-service:
+    build: ./wallet-service
+    container_name: ewallet-wallet
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/ewallet_wallet
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - JWT_SECRET=ewallet-super-secret-key-2024-must-be-at-least-256-bits-long!!
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - ewallet-network
+
+  transaction-service:
+    build: ./transaction-service
+    container_name: ewallet-transaction
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/ewallet_transactions
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - JWT_SECRET=ewallet-super-secret-key-2024-must-be-at-least-256-bits-long!!
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - ewallet-network
+
+  notification-service:
+    build: ./notification-service
+    container_name: ewallet-notification
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/ewallet_notifications
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - JWT_SECRET=ewallet-super-secret-key-2024-must-be-at-least-256-bits-long!!
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - ewallet-network
+
+networks:
+  ewallet-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:

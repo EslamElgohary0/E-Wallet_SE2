@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moneylliza - لوحة تحكم المدير</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        body { background: #f5f7fa; }
+        .sidebar { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+        .card { transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .user-row { transition: all 0.2s ease; }
+        .user-row:hover { background: #f9fafb; }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="flex">
+    <aside class="sidebar w-80 min-h-screen text-white p-6 shadow-xl">
+        <div class="text-center mb-8">
+            <div class="text-5xl mb-3">
+                <i class="fas fa-crown"></i>
+            </div>
+            <h2 class="text-2xl font-bold">Moneylliza</h2>
+            <p class="text-blue-200 text-sm mt-1">لوحة تحكم المدير</p>
+            <p class="text-blue-300 text-xs mt-2">مرحباً، <span id="adminName">المدير</span></p>
+        </div>
+        
+        <nav class="space-y-2">
+            <div class="bg-white/20 rounded-xl p-3 cursor-pointer" onclick="showSection('users')">
+                <i class="fas fa-users ml-3"></i>
+                <span>إدارة المستخدمين</span>
+            </div>
+            <div class="opacity-75 hover:opacity-100 transition p-3 rounded-xl cursor-pointer" onclick="showSection('wallets')">
+                <i class="fas fa-wallet ml-3"></i>
+                <span>المحافظ</span>
+            </div>
+            <div class="opacity-75 hover:opacity-100 transition p-3 rounded-xl cursor-pointer" onclick="showSection('transactions')">
+                <i class="fas fa-exchange-alt ml-3"></i>
+                <span>جميع المعاملات</span>
+            </div>
+            <div class="opacity-75 hover:opacity-100 transition p-3 rounded-xl cursor-pointer" onclick="showSection('stats')">
+                <i class="fas fa-chart-line ml-3"></i>
+                <span>إحصائيات النظام</span>
+            </div>
+        </nav>
+        
+        <div class="absolute bottom-6 left-6 right-6">
+            <button onclick="logout()" class="w-full bg-red-500/20 hover:bg-red-500/30 transition p-3 rounded-xl">
+                <i class="fas fa-sign-out-alt ml-2"></i>
+                تسجيل خروج
+            </button>
+        </div>
+    </aside>
+    
+    <main class="flex-1 p-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-chart-line ml-3 text-blue-600"></i>
+                لوحة تحكم المدير
+            </h1>
+            <button onclick="refreshAll()" class="bg-blue-100 text-blue-600 px-4 py-2 rounded-xl hover:bg-blue-200 transition">
+                <i class="fas fa-sync-alt ml-2"></i>
+                تحديث الكل
+            </button>
+        </div>
+        
+        <!-- Stats Section -->
+        <div id="statsSection">
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="stat-card rounded-2xl p-6 text-white shadow-lg">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-blue-200 text-sm">إجمالي المستخدمين</p>
+                            <p class="text-3xl font-bold mt-2" id="totalUsers">0</p>
+                        </div>
+                        <i class="fas fa-users text-4xl text-white/20"></i>
+                    </div>
+                </div>
+                <div class="stat-card rounded-2xl p-6 text-white shadow-lg" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-pink-200 text-sm">إجمالي المحافظ</p>
+                            <p class="text-3xl font-bold mt-2" id="totalWallets">0</p>
+                        </div>
+                        <i class="fas fa-wallet text-4xl text-white/20"></i>
+                    </div>
+                </div>
+                <div class="stat-card rounded-2xl p-6 text-white shadow-lg" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-blue-200 text-sm">إجمالي المعاملات</p>
+                            <p class="text-3xl font-bold mt-2" id="totalTransactions">0</p>
+                        </div>
+                        <i class="fas fa-exchange-alt text-4xl text-white/20"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div id="usersSection" class="bg-white rounded-2xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-users ml-2 text-blue-600"></i>
+                قائمة المستخدمين
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="p-3 text-right">الاسم</th>
+                            <th class="p-3 text-right">البريد الإلكتروني</th>
+                            <th class="p-3 text-right">الهاتف</th>
+                            <th class="p-3 text-right">الدور</th>
+                            <th class="p-3 text-right">الحالة</th>
+                            <th class="p-3 text-right">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        
+        <div id="walletsSection" class="hidden bg-white rounded-2xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-wallet ml-2 text-blue-600"></i>
+                جميع المحافظ
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="p-3 text-right">رقم المحفظة</th>
+                            <th class="p-3 text-right">المالك</th>
+                            <th class="p-3 text-right">الرصيد</th>
+                            <th class="p-3 text-right">الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="walletsList"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        
+        <div id="transactionsSection" class="hidden bg-white rounded-2xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-exchange-alt ml-2 text-blue-600"></i>
+                جميع المعاملات
+            </h2>
+            <div class="overflow-x-auto max-h-96">
+                <table class="w-full">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th class="p-3 text-right">التاريخ</th>
+                            <th class="p-3 text-right">المرسل</th>
+                            <th class="p-3 text-right">المستلم</th>
+                            <th class="p-3 text-right">المبلغ</th>
+                            <th class="p-3 text-right">الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsList"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <script src="js/app.js"></script>
+    <script>
+        if (!checkAuth()) window.location.href = 'index.html';
+        
+        const userRole = localStorage.getItem('userRole');
+        if (userRole !== 'ROLE_ADMIN') {
+            showToast('غير مصرح بالدخول - هذه الصفحة للمديرين فقط', 'error');
+            setTimeout(() => window.location.href = 'user-dashboard.html', 2000);
+        }
+        
+        document.getElementById('adminName').innerText = localStorage.getItem('firstName') || 'المدير';
+        
+        loadUsers();
+        loadWalletStats();
+        loadTransactionStats();
+        
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (!response.ok) throw new Error('فشل تحميل المستخدمين');
+                
+                const users = await response.json();
+                const tbody = document.getElementById('usersList');
+                
+                tbody.innerHTML = users.map(user => `
+                    <tr class="user-row border-b border-gray-100">
+                        <td class="p-3">${user.firstName} ${user.lastName}</td>
+                        <td class="p-3">${user.email}</td>
+                        <td class="p-3">${user.phoneNumber || '---'}</td>
+                        <td class="p-3">
+                            <select onchange="changeRole('${user.id}', this.value)" class="px-2 py-1 rounded-lg border ${user.role === 'ROLE_ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100'}">
+                                <option value="ROLE_USER" ${user.role === 'ROLE_USER' ? 'selected' : ''}>مستخدم</option>
+                                <option value="ROLE_ADMIN" ${user.role === 'ROLE_ADMIN' ? 'selected' : ''}>مدير</option>
+                            </select>
+                        </td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-xs ${user.enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${user.enabled ? 'نشط' : 'معطل'}
+                            </span>
+                        </td>
+                        <td class="p-3">
+                            <div class="flex gap-2">
+                                ${user.enabled ? 
+                                    `<button onclick="toggleUserStatus('${user.id}', false)" class="text-orange-600 hover:text-orange-800 transition" title="تعطيل">
+                                        <i class="fas fa-ban"></i>
+                                    </button>` :
+                                    `<button onclick="toggleUserStatus('${user.id}', true)" class="text-green-600 hover:text-green-800 transition" title="تفعيل">
+                                        <i class="fas fa-check-circle"></i>
+                                    </button>`
+                                }
+                                <button onclick="deleteUser('${user.id}')" class="text-red-600 hover:text-red-800 transition" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                document.getElementById('totalUsers').innerText = users.length;
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+        
+        async function changeRole(userId, newRole) {
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ role: newRole })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'فشل تغيير الدور');
+                }
+                
+                showToast('تم تغيير دور المستخدم بنجاح', 'success');
+                await loadUsers();
+                refreshAll();
+            } catch (error) {
+                showToast(error.message, 'error');
+                loadUsers();
+            }
+        }
+        
+        async function toggleUserStatus(userId, enable) {
+            const endpoint = enable ? 'enable' : 'disable';
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users/${userId}/${endpoint}`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders()
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'فشل تغيير حالة المستخدم');
+                }
+                
+                showToast(`تم ${enable ? 'تفعيل' : 'تعطيل'} المستخدم بنجاح`, 'success');
+                await loadUsers();
+                refreshAll();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+        
+        async function deleteUser(userId) {
+            if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء!')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'فشل حذف المستخدم');
+                }
+                
+                showToast('تم حذف المستخدم بنجاح', 'success');
+                await loadUsers();
+                await loadWalletStats();
+                refreshAll();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+        
+        async function loadWalletStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/wallet/admin/all`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (!response.ok) throw new Error('فشل تحميل بيانات المحافظ');
+                
+                const wallets = await response.json();
+                document.getElementById('totalWallets').innerText = wallets.length;
+                
+                const walletsList = document.getElementById('walletsList');
+                walletsList.innerHTML = wallets.map(w => `
+                    <tr class="user-row border-b border-gray-100">
+                        <td class="p-3 font-mono text-sm">${w.walletNumber}</td>
+                        <td class="p-3">${w.ownerEmail || '---'}</td>
+                        <td class="p-3 font-bold ${w.balance > 0 ? 'text-green-600' : 'text-gray-600'}">${formatCurrency(w.balance)}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-xs ${w.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${w.active ? 'نشطة' : 'مجمدة'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+        
+        async function loadTransactionStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/transactions/admin/all`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (!response.ok) throw new Error('فشل تحميل المعاملات');
+                
+                const transactions = await response.json();
+                document.getElementById('totalTransactions').innerText = transactions.length;
+                
+                const transactionsList = document.getElementById('transactionsList');
+                transactionsList.innerHTML = transactions.slice(0, 100).map(t => `
+                    <tr class="user-row border-b border-gray-100">
+                        <td class="p-3 text-sm">${formatDate(t.createdAt)}</td>
+                        <td class="p-3">${t.senderEmail || '---'}</td>
+                        <td class="p-3">${t.receiverEmail || '---'}</td>
+                        <td class="p-3 font-bold ${t.type === 'TRANSFER' ? 'text-blue-600' : 'text-purple-600'}">${formatCurrency(t.amount)}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-xs ${t.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : t.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">
+                                ${t.status === 'COMPLETED' ? 'مكتملة' : t.status === 'PENDING' ? 'معلقة' : 'فاشلة'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+        
+        function showSection(section) {
+            document.getElementById('statsSection').classList.add('hidden');
+            document.getElementById('usersSection').classList.add('hidden');
+            document.getElementById('walletsSection').classList.add('hidden');
+            document.getElementById('transactionsSection').classList.add('hidden');
+            
+            if (section === 'users') {
+                document.getElementById('usersSection').classList.remove('hidden');
+                loadUsers();
+            } else if (section === 'wallets') {
+                document.getElementById('walletsSection').classList.remove('hidden');
+                loadWalletStats();
+            } else if (section === 'transactions') {
+                document.getElementById('transactionsSection').classList.remove('hidden');
+                loadTransactionStats();
+            } else {
+                document.getElementById('statsSection').classList.remove('hidden');
+                loadUsers();
+                loadWalletStats();
+                loadTransactionStats();
+            }
+        }
+        
+        function refreshAll() {
+            loadUsers();
+            loadWalletStats();
+            loadTransactionStats();
+        }
+    </script>
+</body>
+</html>
